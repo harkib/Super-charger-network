@@ -15,6 +15,15 @@ struct node {
     
 };
 
+/*
+arc_distnace(network, i, j){
+    double distance = pow(pow(network[i].lat - network[j].lat, 2) + pow(network[i].lon - network[j].lon, 2),.5)
+    double theta = arcsin (distance/(2*Earth_radius))
+
+    retrun theta*Earth_radius
+
+}
+*/
 
 /*gen_distance_map(network, full_charge){
     map< int, map< int, double>>;
@@ -34,7 +43,7 @@ struct node {
 /*A_star(distance_map, network, start, goal){
     time_step = .1 hours // for charging 
 
-    root = start;
+    root = node of start;
     pQueue.push(root)
 
     while pQueue.not_empty{
@@ -43,7 +52,7 @@ struct node {
         //do we need upper bound on time cost?
 
         //Check goal condition 
-        if (curr == goal ){
+        if (curr.name == goal ){
             reurtn curr.path_to
         }
 
@@ -64,9 +73,11 @@ struct node {
                 pQueue.push(x)
 
         //add charging nodes
-        node x = curr;
-        x.time = x.time + time_step;
-        x.car_charge = x.car_charge + time_step*x.rate;
+        if curr.car_charge != full_charge {
+            node x = curr;
+            x.time = x.time + time_step;
+            x.car_charge = x.car_charge + time_step*x.rate;
+        s}
 
     }
 
