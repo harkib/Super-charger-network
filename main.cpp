@@ -1,6 +1,14 @@
-#include "network.h"
+#include <vector>
+#include <string>
+#include <math.h>
+#include <map>
+#include "network.cpp"
 
 using namespace std;
+
+const double full_charge = 320.00;
+const double speed = 105.00;
+const double Earth_radius = 6356.752;
 
 struct node {
     std::string name;
@@ -10,30 +18,40 @@ struct node {
     double rate;
     double car_charge;
     double time; //g
-    //path_to, another struct ? 
+    vector<pair<string,double>> path;
     double f; //h is time to drive arc to goal 
     
 };
 
-/*
-arc_distnace(network, i, j){
-    double distance = pow(pow(network[i].lat - network[j].lat, 2) + pow(network[i].lon - network[j].lon, 2),.5)
-    double theta = arcsin (distance/(2*Earth_radius))
 
-    retrun theta*Earth_radius
+double get_arc_distance(int i, int j){
+    double NS_straight = 2*sin((3.14/180)*abs(network[i].lon - network[j].lon)/2)*Earth_radius;
+    double EW_straight = 2*sin((3.14/180)*abs(network[i].lat - network[j].lat)/2)*Earth_radius;
+    double distance_straight = pow(pow(EW_straight, 2) + pow(NS_straight, 2),.5);
+    double theta = 2*asin ((distance_straight/2)/Earth_radius);
+
+    return theta*Earth_radius;
 
 }
-*/
 
-/*gen_distance_map(network, full_charge){
-    map< int, map< int, double>>;
+
+map< int, map< int, double>> gen_distance_map(int n){
     //map< network_index1, map< network_index2, double> > distance;
-    for i,j to n
-        if arc_distance <= full_charge
-            distance_map[i][j] = arc_distnace
-
-    return distance_map
-}*/
+    map< int, map< int, double>> distance_map;
+    
+    double arc_distance;
+    for (int i = 0; i < n; i++){
+        for (int j = 0; j < n; j++){
+            if (i!=j){
+                arc_distance = get_arc_distance(i, j);
+                //if (arc_distance <= full_charge)
+                    distance_map[i][j] = arc_distance;
+                //}
+                }
+            }
+    }
+    return distance_map;
+}
 
 
 
@@ -71,6 +89,7 @@ arc_distnace(network, i, j){
                 x.f = x.time +h(x,goal)
                 
                 pQueue.push(x)
+                // revenue.push_back(std::make_pair("string",map[i].second));
 
         //add charging nodes
         if curr.car_charge != full_charge {
@@ -84,20 +103,46 @@ arc_distnace(network, i, j){
     // return no solutions 
 }*/
 
-int main(int argc, char** argv)
-{
-    //get user input for charger names 
+bool valid_user_input(std::string location, int n){
+    bool found = false;
+    for (int i = 0; i < n; i++){
+        if (network[i].name == location){
+            found = true;
+        }
+    }
+    return found;
+}
 
+int main(int argc, char** argv)
+{   
+
+    //should exapnd 
+    const int nMax = 303;
+
+    //vary n ...
+    int n = 303;
+
+    //get user input for charger names 
     std::string start_charger_name;
     std::string end_charger_name;
-
-    //maybe gobal 
-    double full_charge = 320.00;
-    double speed = 105.00;
-    double Earth_radius = 6356.752;
-
     
-    //A_star(distance_map, network, start, goal)
+    // while(!valid_user_input(start_charger_name, n)){
+    //     cout << "Enter start_charger_name: ";
+    //     cin >> start_charger_name;
+    // }
+    // while(!valid_user_input(end_charger_name, n)){
+    //     cout << "Enter end_charger_name: ";
+    //     cin >> end_charger_name;
+    // }
+
+    //create distance map 
+    map< int, map< int, double>> distance_map = gen_distance_map(n);
+
+    cout << network[0].name << ", " << network[1].name << ": " << distance_map[0][1] << endl;
+
+   // vector<pair<string,double>> path = A_star(distance_map,n, start, goal);
+
+    //print path
 
     return 0;
 }
