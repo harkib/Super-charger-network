@@ -218,8 +218,10 @@ vector<pair<string,double>> A_star(map< int, map< int, double>> distance_map,int
 
 
 
-std::tuple<double,string,std::vector> search_succ(map< int, map< int, double>> distance_map,vector<pair<string,double>> path,
-                                int n,double rate_min, double g, double threshold,int goal_i,double car_charge){
+std::tuple<double,string,vector<pair<string,double>> >
+search_succ(map< int, map< int, double>> distance_map,vector<pair<string,double>> path,
+  int n,double rate_min, double g, double threshold,int goal_i,double car_charge)
+  {
   node curr;
   pair <string,double>curr_state = path.back();
   curr.name = curr_state.first;
@@ -235,12 +237,15 @@ std::tuple<double,string,std::vector> search_succ(map< int, map< int, double>> d
   }
   double f = g + h(curr_i,goal_i,rate_min);
   if (f > threshold){
-    std::tuple <double,string,std::vector> result (f,"ROUTING",path);
+    std::tuple <double,string,vector<pair<string,double>>> result (f,"ROUTING",path);
     return result;
   }
+  //goal test
   if (curr.name == network[goal_i].name){
-    std::tuple <double,string,std::vector> result (f,"FOUND",path);
+    std::tuple <double,string,vector<pair<string,double>>> result (f,"FOUND",path);
+    cout<<"Goaltest:--reach destination, curr path size: "<<path.size()<<" threshold:"<<std::get<0>(result)<<endl;
     return result;
+    //cout<<"cosrr return";
   }
   double min = INFINITY;
   //all reachable succ from node:
@@ -264,30 +269,50 @@ std::tuple<double,string,std::vector> search_succ(map< int, map< int, double>> d
               succ.latitude = network[i].lat;
               succ.rate = network[i].rate;
               succ.car_charge = curr.car_charge - distance_map[curr_i][i];
-              succ.time = curr.time + distance_map[curr_i][i]/speed;
+              cout<<"examing: "<<succ.name<<", energy left: "<<succ.car_charge<<endl;
+              cout<<"time :"<<curr.time+distance_map[curr_i][i]/speed<<endl;
+              //charging
+              double charge_time = 0;
+              if (succ.car_charge < full_charge){
+                charge_time = (full_charge-succ.car_charge)/network[i].rate;
+              }
+              //cout<<"examing: "<<succ.name<<"energy left: "<<succ.car_charge<<endl;
+              cout<<" cherge time to full charge: "<<charge_time<<endl;
+
+              succ.time = curr.time + distance_map[curr_i][i]/speed + charge_time;
               //succ.path = curr.path;
               succ.f = succ.time +h(i,goal_i,rate_min);
-              path.push_back(std::make_pair(succ.name,0));
-              //cout<<"push to back of path"<<endl;
-              std::tuple <double,std::string,std::vector> t
+              path.push_back(std::make_pair(succ.name,succ.time));
+              //--checking part
+
+              cout<<"push"<<endl;
+              //--checked
+              std::tuple <double,std::string,vector<pair<string,double>>> t
                         = search_succ(distance_map,path,n,rate_min,succ.time,threshold,goal_i,curr.car_charge);
-              if (get<1>(t) == "FOUND"){
-                std::tuple <double,std::string,std::vector> result (get<0>(t),"FOUND",path);
+              if (std::get<1>(t) == "FOUND"){
+                double th = std::get<0>(t);
+                std::string rs = std::get<1>(t);
+                vector<pair<string,double>> p = std::get<2>(t);
+                //cout<<"search_succ:--threshold:"<<th<<" result:"<<rs<<" pathsize:"<<p.size()<<endl;
+                std::tuple <double,std::string,vector<pair<string,double>>> result (get<0>(t),"FOUND",get<2>(t));
                 return result;
               }
-              if (get<0>(t)<min){
-                min = get<0>(t);
+              if (std::get<0>(t)<min){
+                min = std::get<0>(t);
               }
+              cout<<"pop:  -"<<path.back().first<<endl;
               path.pop_back();
               //cout << "added reachable node" << endl;
           }
       }
   }
-  std::tuple <double,std::string,path> result (min,"NOT_FOUND",path);
+  std::tuple <double,std::string,vector<pair<string,double>>> result (min,"NOT_FOUND",path);
   return result;
 }
 
-vector<pair<string,double>> ID_A_star(map< int, map< int, double>> distance_map,int n, std::string start,std::string goal){
+vector<pair<string,double>> ID_A_star(map< int, map< int, double>>
+  distance_map,int n, std::string start,std::string goal){
+
     double time_step = 0.01; //hours // for charging
     double rate_min = get_rate_min(n);
     vector<pair<string,double>> path;
@@ -302,8 +327,9 @@ vector<pair<string,double>> ID_A_star(map< int, map< int, double>> distance_map,
             goal_i = j;
         }
     }
+    cout<<"---------straight line distance: "<<distance_map[start_i][goal_i] <<"--------------"<<endl;
     //original threshold
-    double threshold = 0.0;
+    double threshold = h(start_i,goal_i,rate_min);
     node root;
     root.name = network[start_i].name;
     root.network_index = start_i;
@@ -314,20 +340,25 @@ vector<pair<string,double>> ID_A_star(map< int, map< int, double>> distance_map,
     root.time = 0;
     path.push_back(std::make_pair(root.name,0));
     root.f = h(start_i,goal_i,rate_min);
+    cout<<"----------start: "<<root.name<<"initial charge: "<<root.car_charge<<"----------------"<<endl;
 
 
 
     while(1){
-      std::std::tuple <double,std::string,std::vector> t = search_succ(distance_map,path,n,rate_min,0,threshold,goal_i,root.car_charge);
-      if (get<1>(t) == "FOUND") {
-        return get<2>(t);
+      std::tuple <double,std::string,vector<pair<string,double>>> t = search_succ(distance_map,path,n,rate_min,0,threshold,goal_i,root.car_charge);
+      if (std::get<1>(t) == "FOUND") {
+        double th = std::get<0>(t);
+        std::string rs = std::get<1>(t);
+        vector<pair<string,double>> p = std::get<2>(t);
+        cout<<"ID_A_star:--threshold:"<<th<<" result:"<<rs<<" pathsize:"<<p.size()<<endl;
+        return std::get<2>(t);
       }
-      if (get<0>(t) == INFINITY){
+      if (std::get<0>(t) == INFINITY){
         vector<pair<string,double>> no_solution;
         no_solution.push_back(std::make_pair("No solution",0));
         return  no_solution;
       }
-      threshold = get<0>(t);
+      threshold = std::get<0>(t);
 
     }
 
@@ -374,11 +405,12 @@ int main(int argc, char** argv)
     map< int, map< int, double>> distance_map = gen_distance_map(n);
 
     //cout << network[0].name << ", " << network[1].name << ": " << distance_map[0][1] << endl;
-    cout << "Running A-star..." << endl;
-    vector<pair<string,double>> path1 = A_star(distance_map,n, start_charger_name, end_charger_name);
-    print_path(path1);
+    //cout << "Running A-star..." << endl;
+    //vector<pair<string,double>> path1 = A_star(distance_map,n, start_charger_name, end_charger_name);
+    //print_path(path1);
     cout << "Running IDA-star..." << endl;
     vector<pair<string,double>> path2 = ID_A_star(distance_map,n, start_charger_name, end_charger_name);
+    //cout<<path2.size();
 
     //print path
     print_path(path2);
