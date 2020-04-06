@@ -4,13 +4,21 @@
 #include <map>
 #include <queue>
 #include "network.h"
+#include <array>
+#include<utility>
+#include<cstdio>
+#include<algorithm>
+
+#include <iostream>
+
 
 using namespace std;
 
 const double full_charge = 320.00;
 const double speed = 105.00;
 const double Earth_radius = 6356.752;
-
+//g++ -std=c++11 -O1 main.cpp network.cpp -o candidate_solution
+//./candidate_solution Council_Bluffs_IA Cadillac_MI
 struct node {
     std::string name;
     int network_index;
@@ -366,6 +374,268 @@ vector<pair<string,double>> ID_A_star(map< int, map< int, double>>
 }
 
 
+/*struct look_aheadSave
+{
+    int index;
+    bool usedvisted;
+};
+*/
+
+
+vector<pair<string,double>> AL_star(map< int, map< int, double>> distance_map,int n, std::string start,std::string goal){
+    cout<<"-----------------------"<<"Start Runing AL_star"<<"---------------------"<<endl;
+    
+    cout<<"Trip from "<<start<<" to "<<goal<<endl;
+    cout<<"initial charge of car is "<< full_charge<<endl;
+    double time_step = .01; //hours // for charging
+    double rate_min = get_rate_min(n);
+    priority_queue<node, vector<node>, compare_node_f> pQueue;
+    priority_queue<node, vector<node>, compare_node_f> QlookaheadSecond;//a new queue for the second step lookahead while check.
+
+    // look up index of start node name
+    int start_i = -1; //start index
+    int goal_i = -1;
+    for (int j = 0; j < n; j++){
+        if (network[j].name == start){
+            start_i = j;
+        }
+        if (network[j].name == goal){
+            goal_i = j;
+        }
+    }
+    cout<<"---------straight line distance: "<<distance_map[start_i][goal_i] <<"--------------"<<endl;
+
+    node root;
+    root.name = network[start_i].name;
+    root.network_index = start_i;
+    root.longitude = network[start_i].lon;
+    root.latitude = network[start_i].lat;
+    root.rate = network[start_i].rate;
+    root.car_charge = full_charge;
+    root.time = 0;
+    root.path.push_back(std::make_pair(root.name,0));
+    root.f = h(start_i,goal_i,rate_min);
+    pQueue.push(root);
+
+    while (!pQueue.empty()){
+        node curr = pQueue.top();
+        pQueue.pop();
+        if (curr.name == goal ){
+
+            return curr.path;
+        }
+
+
+        //add reachable nodes
+        for (int i = 0; i < n; i++){
+
+            //reachable nodes
+            if (distance_map[curr.network_index][i] <= curr.car_charge && curr.network_index != i){
+                //ckeck for looping
+                bool trackCheck = true;
+                int path_len = curr.path.size();
+                for (int k = 0; k < path_len; k++){
+                    if(curr.path[k].first == network[i].name){
+                        trackCheck = false;
+                    }
+                }
+ /*       for(int i=0; i<n;i++)
+        {
+
+            if (distance_map[curr.network_index][i] <= curr.car_charge && curr.network_index != i)
+            {
+                for (int k = 0; k < path_len; k++)
+                {
+                    if(curr.path[k].first == network[i].name)
+                    {
+                        tempsave.push(i);
+                    }
+                }
+            }
+        }
+        int lookaheadcpr[tempsave.size()];
+        
+        int lpsize=tempsave.size();
+        for(int u=0;u<tempsave.size();u++)
+        {
+            int findIdex=tempsave.top();
+            tempsave.pop();
+            lookaheadcpr[u]=findIdex;
+
+        }
+        
+        for(int j=0;j<lpsize;j++)
+        {
+            for(int i=0; i<n;i++)
+            {
+
+                if (distance_map[lookaheadcpr[j]][i] <= curr.car_charge && curr.network_index != i)
+                {
+                    for (int k = 0; k < path_len; k++)
+                    {
+                        if(curr.path[k].first == network[i].name)
+                        {
+                            tempsave2.push(i);
+                        }
+                    }
+                }
+            }
+        }
+        pair<int,double> lookaheadcpr1[tempsave2.size()];
+        for(int j=0;j<lpsize;j++)
+        {
+            for(int i=0; i<n;i++)
+            {
+
+                if (distance_map[lookaheadcpr[j]][i] <= curr.car_charge && curr.network_index != i)
+                {
+                    for (int k = 0; k < path_len; k++)
+                    {
+                        if(curr.path[k].first == network[i].name)
+                        {
+                            lookaheadcpr1[j]=make_pair(lookaheadcpr[j],i);
+                        }
+                    }
+                }
+            }
+        }
+        double savingtime[];
+        for(int i=0;i<tempsave2.size();i++)
+        {
+            savingtime[i]=curr.time + distance_map[curr.network_index][lookaheadcpr1[i].first]/speed+distance_map[lookaheadcpr1[i].first][lookaheadcpr1[i].second];
+        }
+        int min_num=0;
+        int cprmin=savingtime[0];
+        for(int i=0;i<size(savingtime)-1;i++)
+        {
+            if(cprmin>savingtime[i+1])
+            {
+                cprmin=savingtime[i+1];
+                min_num=i+1;
+            }
+
+        }
+        */
+                if(trackCheck){
+                    node lookaheadfirststep;
+                    lookaheadfirststep.name = network[i].name;
+                    lookaheadfirststep.network_index = i;
+                    lookaheadfirststep.longitude = network[i].lon;
+                    lookaheadfirststep.latitude = network[i].lat;
+                    lookaheadfirststep.rate = network[i].rate;
+                    lookaheadfirststep.car_charge = curr.car_charge - distance_map[curr.network_index][i];
+                    lookaheadfirststep.time = curr.time + distance_map[curr.network_index][i]/speed;
+                    lookaheadfirststep.path = curr.path;
+                    lookaheadfirststep.path.push_back(std::make_pair(lookaheadfirststep.name,0));
+                    lookaheadfirststep.f = lookaheadfirststep.time +h(i,goal_i,rate_min);
+                    cout<<"station: "<<lookaheadfirststep.name<<"    charging left: "<<lookaheadfirststep.car_charge<<endl;
+                    cout<<"time :"<<lookaheadfirststep.time<<endl;
+
+                    pQueue.push(lookaheadfirststep);
+
+                    
+                }
+            } else {
+                //tracked or dissatisfy
+            }
+        }
+
+        //add charging nodes
+        if (curr.car_charge < full_charge) {
+            node x = curr;
+            x.time += time_step;
+            x.car_charge += time_step*x.rate;
+            x.path[x.path.size()-1].second += time_step;
+            if (x.car_charge > full_charge){
+                int over_time = (x.car_charge - full_charge)/x.rate;
+                x.car_charge = full_charge;
+                x.time -= over_time;
+                x.path[x.path.size()-1].second -= over_time;
+
+            }
+            x.f = x.time + h(x.network_index, goal_i,rate_min);
+            pQueue.push(x);
+
+        }
+        //lookahead one more step 
+        while (!QlookaheadSecond.empty()){
+          curr = QlookaheadSecond.top();
+          QlookaheadSecond.pop();
+
+          if (curr.name == goal ){
+
+            return curr.path;
+          }
+
+
+        //add reachable nodes
+          for (int i = 0; i < n; i++){
+
+            //reachable nodes
+              if (distance_map[curr.network_index][i] <= curr.car_charge && curr.network_index != i){
+                //ckeck for looping
+                  bool trackChecksecond = true;
+                  int path_len = curr.path.size();
+                  for (int k = 0; k < path_len; k++){
+                      if(curr.path[k].first == network[i].name){
+                          trackChecksecond = false;
+                      }
+                  }
+
+                  if(trackChecksecond){
+                    node lookaheadsecondstep;
+                    lookaheadsecondstep.name = network[i].name;
+                    lookaheadsecondstep.network_index = i;
+                    lookaheadsecondstep.longitude = network[i].lon;
+                    lookaheadsecondstep.latitude = network[i].lat;
+                    lookaheadsecondstep.rate = network[i].rate;
+                    lookaheadsecondstep.car_charge = curr.car_charge - distance_map[curr.network_index][i];
+                    lookaheadsecondstep.time = curr.time + distance_map[curr.network_index][i]/speed;
+                    lookaheadsecondstep.path = curr.path;
+                    lookaheadsecondstep.path.push_back(std::make_pair(lookaheadsecondstep.name,0));
+                    lookaheadsecondstep.f = lookaheadsecondstep.time +h(i,goal_i,rate_min);
+                    cout<<"station: "<<lookaheadsecondstep.name<<"    charging left: "<<lookaheadsecondstep.car_charge<<endl;
+                    cout<<"time :"<<lookaheadsecondstep.time<<endl;
+
+                    pQueue.push(lookaheadsecondstep);
+
+                    //cout << "added reachable node" << endl;
+                  }
+            } 
+            else 
+            {
+                //cout << "not reachble" << endl;
+            }
+        }
+
+        //add charging nodes
+        if (curr.car_charge < full_charge) {
+            node x = curr;
+            x.time += time_step;
+            x.car_charge += time_step*x.rate;
+            x.path[x.path.size()-1].second += time_step;
+            if (x.car_charge > full_charge){
+                int over_time = (x.car_charge - full_charge)/x.rate;
+                x.car_charge = full_charge;
+                x.time -= over_time;
+                x.path[x.path.size()-1].second -= over_time;
+
+            }
+            x.f = x.time + h(x.network_index, goal_i,rate_min);
+            pQueue.push(x);
+
+        }
+
+    }
+
+    }
+    vector<pair<string,double>> no_solution;
+    no_solution.push_back(std::make_pair("No solution",0));
+    return  no_solution;
+}
+
+
+
 bool valid_user_input(std::string location, int n){
     bool found = false;
     for (int i = 0; i < n; i++){
@@ -408,8 +678,8 @@ int main(int argc, char** argv)
     //cout << "Running A-star..." << endl;
     //vector<pair<string,double>> path1 = A_star(distance_map,n, start_charger_name, end_charger_name);
     //print_path(path1);
-    cout << "Running IDA-star..." << endl;
-    vector<pair<string,double>> path2 = ID_A_star(distance_map,n, start_charger_name, end_charger_name);
+    cout << "Running AL_star..." << endl;
+    vector<pair<string,double>> path2 = AL_star(distance_map,n, start_charger_name, end_charger_name);
     //cout<<path2.size();
 
     //print path
