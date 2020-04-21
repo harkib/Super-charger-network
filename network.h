@@ -14,6 +14,7 @@ struct row
     double rate;
 };
 
+
 extern std::array<row, 303> network;
 /*************************************************/
 /********* DO NOT MODIFY THIS FILE ************/

@@ -1,0 +1,13 @@
+Bellevue_WA, Ellensburg_WA, 0.344607, Kennewick_WA, 1.38161, Baker_City_OR, 1.96319, Boise_ID, 0.878505, Twin_Falls_ID, 2.19178, West_Wendover_NV, 1.96121, Beaver_UT, 1.49569, St._George_UT, 1.74863, Flagstaff_AZ, 1.25807, Tempe_AZ
+
+0: Bellevue_WA, Ellensburg_WA
+1: Bellevue_WA, Kennewick_WA
+2: Bellevue_WA, Baker_City_OR
+3: Bellevue_WA, Boise_ID
+4: Bellevue_WA, Twin_Falls_ID
+5: Bellevue_WA, West_Wendover_NV
+6: Bellevue_WA, Beaver_UT
+7: Bellevue_WA, St._George_UT
+8: Bellevue_WA, Flagstaff_AZ
+9: Bellevue_WA, Tempe_AZ
+
