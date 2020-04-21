@@ -186,53 +186,76 @@ vector<pair<string,double>> A_star(map< int, map< int, double>> distance_map,int
                 }          
             } 
             //rechable with charging  
-            // else if(distance_map[curr.network_index][i] <= full_charge && curr.network_index != i){
+            else if(distance_map[curr.network_index][i] <= full_charge && curr.network_index != i){
 
-            //     //ckeck for looping 
-            //     bool visted = false; 
-            //     int path_len = curr.path.size();
-            //     for (int k = 0; k < path_len; k++){
-            //         if(curr.path[k].first == network[i].name){
-            //             visted = true;
-            //         }
-            //     }
+                //ckeck for looping 
+                bool visted = false; 
+                int path_len = curr.path.size();
+                for (int k = 0; k < path_len; k++){
+                    if(curr.path[k].first == network[i].name){
+                        visted = true;
+                    }
+                }
 
-            //     //if not visited
-            //     //stays at same charger but charges minimum to get to charger i 
-            //     if(!visted){
-            //         double charge_needed = distance_map[curr.network_index][i] - curr.car_charge;
-            //         double time_needed = charge_needed/curr.rate;
+                //if not visited
+                //charges minimum to get to charger i and goes to charger i
+                if(!visted){
+                    double charge_needed = distance_map[curr.network_index][i] - curr.car_charge;
+                    double time_needed = charge_needed/curr.rate;
 
-            //         node x = curr;
-            //         x.car_charge += charge_needed;
-            //         x.time +=  time_needed;
-            //         x.path[x.path.size()-1].second += time_needed;
-            //         x.f = x.time +h(x.network_index,goal_i,rate_min,x.car_charge);
+                    //charge min needed
+                    node x = curr;
+                    x.car_charge += charge_needed;
+                    x.time +=  time_needed;
+                    x.path[x.path.size()-1].second += time_needed;
+                    x.f = x.time +h(x.network_index,goal_i,rate_max,x.car_charge);
                     
-            //         pQueue.push(x);
-            //     }
+                    //go to charger i
+                    x.name = network[i].name;
+                    x.network_index = i;
+                    x.longitude = network[i].lon;
+                    x.latitude = network[i].lat;
+                    x.rate = network[i].rate;
+                    x.car_charge = x.car_charge - distance_map[curr.network_index][i];
+                    x.time = x.time + distance_map[curr.network_index][i]/speed;
+                    x.path.push_back(std::make_pair(x.name,0));
+                    x.f = x.time +h(i,goal_i,rate_max,x.car_charge);
+                    pQueue.push(x);
+                }
 
-            // }
+            }
             else {
                 //cout << "not reachble" << endl;
             }
         }
 
         //add charging nodes
-        if (curr.car_charge < full_charge) { 
-            node x = curr;
-            x.time += time_step;
-            x.car_charge += time_step*x.rate;  
-            x.path[x.path.size()-1].second += time_step;
-            if (x.car_charge > full_charge){
-                float over_time = (x.car_charge - full_charge)/x.rate;
-                x.car_charge = full_charge;
-                x.time -= over_time;
-                x.path[x.path.size()-1].second -= over_time;
+        // if (curr.car_charge < full_charge) { 
+        //     node x = curr;
+        //     x.time += time_step;
+        //     x.car_charge += time_step*x.rate;  
+        //     x.path[x.path.size()-1].second += time_step;
+        //     if (x.car_charge > full_charge){
+        //         float over_time = (x.car_charge - full_charge)/x.rate;
+        //         x.car_charge = full_charge;
+        //         x.time -= over_time;
+        //         x.path[x.path.size()-1].second -= over_time;
 
-            }
+        //     }
+        //     x.f = x.time + h(x.network_index, goal_i,rate_max,x.car_charge);
+        //     pQueue.push(x);
+        // }
+
+        //fully charge
+        if (curr.car_charge < full_charge) { 
+            double charge_needed = full_charge- curr.car_charge;
+            double time_needed = charge_needed/curr.rate;
+
+            node x = curr;
+            x.time += time_needed;
+            x.car_charge += charge_needed;  
+            x.path[x.path.size()-1].second += time_needed;
             x.f = x.time + h(x.network_index, goal_i,rate_max,x.car_charge);
-            //x.f = x.time + h(x.network_index, goal_i,rate_min,full_charge);
             pQueue.push(x);
 
         }
