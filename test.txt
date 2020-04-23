@@ -11,3 +11,28 @@ Bellevue_WA, Ellensburg_WA, 0.344607, Kennewick_WA, 1.38161, Baker_City_OR, 1.96
 8: Bellevue_WA, Flagstaff_AZ
 9: Bellevue_WA, Tempe_AZ
 
+Sheridan_WY, Gillette_WY, 0.417049, Lusk_WY, 1.33199, Cheyenne_WY, 0.990497, Lone_Tree_CO, 1.70213, Colorado_Springs_CO, 0.510919, Trinidad_CO, 0.897539, Tucumcari_NM, 2.17687, Amarillo_TX, 0.66677, Shamrock_TX, 1.78188, Sweetwater_TX
+
+0: Sheridan_WY, Gillette_WY
+1: Sheridan_WY, Lusk_WY
+2: Sheridan_WY, Cheyenne_WY
+3: Sheridan_WY, Lone_Tree_CO
+4: Sheridan_WY, Colorado_Springs_CO
+5: Sheridan_WY, Trinidad_CO
+6: Sheridan_WY, Tucumcari_NM
+7: Sheridan_WY, Amarillo_TX
+8: Sheridan_WY, Shamrock_TX
+9: Sheridan_WY, Sweetwater_TX
+
+Sweetwater_TX, Cisco_TX, 0.849969, Bellmead_TX, 0.790185, Huntsville_TX, 2.07792, Lake_Charles_LA, 1.3196, Baton_Rouge_LA, 1.84971, Slidell_LA, 1.25496, Mobile_AL, 0.913791, DeFuniak_Springs_FL, 1.69542, Tallahassee_FL, 1.50428, Ocala_FL
+
+0: Sweetwater_TX, Cisco_TX
+1: Sweetwater_TX, Bellmead_TX
+2: Sweetwater_TX, Huntsville_TX
+3: Sweetwater_TX, Lake_Charles_LA
+4: Sweetwater_TX, Baton_Rouge_LA
+5: Sweetwater_TX, Slidell_LA
+6: Sweetwater_TX, Mobile_AL
+7: Sweetwater_TX, DeFuniak_Springs_FL
+8: Sweetwater_TX, Tallahassee_FL
+9: Sweetwater_TX, Ocala_FL
