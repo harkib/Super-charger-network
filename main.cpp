@@ -119,8 +119,10 @@ double get_rate_max(int n){
 }
 
 vector<pair<string,double>> A_star(map< int, map< int, double>> distance_map,int n, std::string start,std::string goal){
-    double time_step = .01; //hours // for charging
+    double time_step = .1; //hours // for charging 
     double rate_max = get_rate_max(n);
+    cout << "Running A-star... with time_step = "<< time_step <<", rate_max = "<<rate_max << endl;
+    
     priority_queue<node, vector<node>, compare_node_f> pQueue;
 
     // look up index of start node name
@@ -135,6 +137,7 @@ vector<pair<string,double>> A_star(map< int, map< int, double>> distance_map,int
         }
     }
 
+    //create root node
     node root;
     root.name = network[start_i].name;
     root.network_index = start_i;
@@ -144,7 +147,7 @@ vector<pair<string,double>> A_star(map< int, map< int, double>> distance_map,int
     root.car_charge = full_charge;
     root.time = 0;
     root.path.push_back(std::make_pair(root.name,0));
-    root.f = h(start_i,goal_i,rate_max,root.car_charge);
+    root.f = h(start_i,goal_i,rate_max, root.car_charge);
     pQueue.push(root);
 
     while (!pQueue.empty()){
@@ -155,24 +158,25 @@ vector<pair<string,double>> A_star(map< int, map< int, double>> distance_map,int
         //print_path(curr.path);
         // cout << curr.f << endl;
 
-
+        
 
         //do we need upper bound on time cost?
 
-        //Check goal condition
+        //Check goal condition 
         if (curr.name == goal ){
 
             return curr.path;
         }
 
-
+        
         //add reachable nodes
         for (int i = 0; i < n; i++){
 
-            //reachable nodes
+            //reachable nodes 
             if (distance_map[curr.network_index][i] <= curr.car_charge && curr.network_index != i){
-                //ckeck for looping
-                bool visted = false;
+
+                //ckeck for looping 
+                bool visted = false; 
                 int path_len = curr.path.size();
                 for (int k = 0; k < path_len; k++){
                     if(curr.path[k].first == network[i].name){
@@ -180,6 +184,7 @@ vector<pair<string,double>> A_star(map< int, map< int, double>> distance_map,int
                     }
                 }
 
+                //if not visited
                 if(!visted){
                     node x;
                     x.name = network[i].name;
@@ -192,29 +197,82 @@ vector<pair<string,double>> A_star(map< int, map< int, double>> distance_map,int
                     x.path = curr.path;
                     x.path.push_back(std::make_pair(x.name,0));
                     x.f = x.time +h(i,goal_i,rate_max,x.car_charge);
-
+                    //x.f = x.time +h(i,goal_i,rate_min,full_charge);
                     pQueue.push(x);
 
                     //cout << "added reachable node" << endl;
+                }          
+            } 
+            //rechable with charging  
+            else if(distance_map[curr.network_index][i] <= full_charge && curr.network_index != i){
+
+                //ckeck for looping 
+                bool visted = false; 
+                int path_len = curr.path.size();
+                for (int k = 0; k < path_len; k++){
+                    if(curr.path[k].first == network[i].name){
+                        visted = true;
+                    }
                 }
-            } else {
+
+                //if not visited
+                //charges minimum to get to charger i and goes to charger i
+                if(!visted){
+                    double charge_needed = distance_map[curr.network_index][i] - curr.car_charge;
+                    double time_needed = charge_needed/curr.rate;
+
+                    //charge min needed
+                    node x = curr;
+                    x.car_charge += charge_needed;
+                    x.time +=  time_needed;
+                    x.path[x.path.size()-1].second += time_needed;
+                    x.f = x.time +h(x.network_index,goal_i,rate_max,x.car_charge);
+                    
+                    //go to charger i
+                    x.name = network[i].name;
+                    x.network_index = i;
+                    x.longitude = network[i].lon;
+                    x.latitude = network[i].lat;
+                    x.rate = network[i].rate;
+                    x.car_charge = x.car_charge - distance_map[curr.network_index][i];
+                    x.time = x.time + distance_map[curr.network_index][i]/speed;
+                    x.path.push_back(std::make_pair(x.name,0));
+                    x.f = x.time +h(i,goal_i,rate_max,x.car_charge);
+                    pQueue.push(x);
+                }
+
+            }
+            else {
                 //cout << "not reachble" << endl;
             }
         }
 
         //add charging nodes
-        if (curr.car_charge < full_charge) {
-            node x = curr;
-            x.time += time_step;
-            x.car_charge += time_step*x.rate;
-            x.path[x.path.size()-1].second += time_step;
-            if (x.car_charge > full_charge){
-                int over_time = (x.car_charge - full_charge)/x.rate;
-                x.car_charge = full_charge;
-                x.time -= over_time;
-                x.path[x.path.size()-1].second -= over_time;
+        // if (curr.car_charge < full_charge) { 
+        //     node x = curr;
+        //     x.time += time_step;
+        //     x.car_charge += time_step*x.rate;  
+        //     x.path[x.path.size()-1].second += time_step;
+        //     if (x.car_charge > full_charge){
+        //         float over_time = (x.car_charge - full_charge)/x.rate;
+        //         x.car_charge = full_charge;
+        //         x.time -= over_time;
+        //         x.path[x.path.size()-1].second -= over_time;
 
-            }
+        //     }
+        //     x.f = x.time + h(x.network_index, goal_i,rate_max,x.car_charge);
+        //     pQueue.push(x);
+        // }
+
+        //fully charge
+        if (curr.car_charge < full_charge) { 
+            double charge_needed = full_charge- curr.car_charge;
+            double time_needed = charge_needed/curr.rate;
+
+            node x = curr;
+            x.time += time_needed;
+            x.car_charge += charge_needed;  
+            x.path[x.path.size()-1].second += time_needed;
             x.f = x.time + h(x.network_index, goal_i,rate_max,x.car_charge);
             pQueue.push(x);
 
@@ -226,7 +284,6 @@ vector<pair<string,double>> A_star(map< int, map< int, double>> distance_map,int
     no_solution.push_back(std::make_pair("No solution",0));
     return  no_solution;
 }
-
 
 
 
